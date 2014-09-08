@@ -38,7 +38,7 @@ sub feed ($url, $name, $commit = 0, $transform = sub { $_[0] }) {
          print $fh $xml;
       }
 
-      Future->wrap($f->$transform)
+      Future->done($f->$transform)
    });
 }
 
@@ -59,7 +59,7 @@ my $f = feed(
                   ->then(sub ($res) {
                      if ($res->content !~ 'this item will become freely available on ' . $ready_date->strftime('%B %d, %Y')) {
                         warn " !!! WTF $ready_date is different on the page!";
-                        return Future->wrap(0)
+                        return Future->done(0)
                      }
                   })->get;
 
