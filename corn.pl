@@ -51,27 +51,33 @@ sub _do_req ($url) {
    }
 }
 
+sub _lwn_content ($self, $commit) {
+   feed(
+      'http://lwn.net/headlines/newrss',
+      'LWN',
+      $commit,
+      sub ($s) {
+         $s->map(sub {
+            if ($_->title =~ m/\[\$\]/) {
+               $_->title($_->title =~ s/\[\$\]//)
+               if _do_req($_->link->href )
+               ->then_done(1)
+               ->else_done(0)
+               ->get;
+            }
+            return $_
+         })->grep(sub { $_->title !~ m/\[\$\]/ });
+      },
+   )->get
+}
+
 sub dispatch_request {
-   GET => sub {
-     '/lwn + ?commit~' => sub ($, $commit, @) {
-        my $content = feed(
-           'http://lwn.net/headlines/newrss',
-           'LWN',
-           $commit,
-           sub ($s) {
-              $s->map(sub {
-                 if ($_->title =~ m/\[\$\]/) {
-                    $_->title($_->title =~ s/\[\$\]//)
-                    if _do_req($_->link->href )
-                    ->then_done(1)
-                    ->else_done(0)
-                    ->get;
-                 }
-                 return $_
-              })->grep(sub { $_->title !~ m/\[\$\]/ });
-           },
-        )->get;
-        [ 200, [ 'Content-type', 'application/atom+xml' ], [ $content->as_xml ] ]
+   'GET + ?commit~' => sub ($self, $commit = 0, @) {
+     '/lwn' => sub {
+        [ 200,
+           [ 'Content-type', 'application/atom+xml' ],
+           [ $self->_lwn_content($commit)->as_xml ],
+        ]
      },
   },
 }
