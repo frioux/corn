@@ -1,7 +1,12 @@
 #!/usr/bin/env perl
 
+package MyFilter;
+
+use Web::Simple;
+
 use 5.20.0;
-use warnings;
+use warnings NONFATAL => 'all';
+
 use autodie;
 
 use experimental 'signatures';
@@ -34,28 +39,6 @@ sub feed ($url, $name, $commit = 0, $transform = sub { $_[0] }) {
    });
 }
 
-my $commit = shift;
-
-my $f = feed(
-   'http://lwn.net/headlines/newrss',
-   'LWN',
-   $commit,
-   sub ($s) {
-      $s->map(sub {
-         if ($_->title =~ m/\[\$\]/) {
-            $_->title($_->title =~ s/\[\$\]//)
-               if _do_req($_->link->href )
-                  ->then_done(1)
-                  ->else_done(0)
-                  ->get;
-         }
-         return $_
-      })->grep(sub { $_->title !~ m/\[\$\]/ });
-   },
-)->get;
-
-say $f->as_xml;
-
 sub _do_req ($url) {
    my $ua = LWP::UserAgent->new;
    $ua->timeout(10);
@@ -67,3 +50,30 @@ sub _do_req ($url) {
       return Future->fail($response)
    }
 }
+
+sub dispatch_request {
+   GET => sub {
+     '/lwn + ?commit~' => sub ($, $commit, @) {
+        my $content = feed(
+           'http://lwn.net/headlines/newrss',
+           'LWN',
+           $commit,
+           sub ($s) {
+              $s->map(sub {
+                 if ($_->title =~ m/\[\$\]/) {
+                    $_->title($_->title =~ s/\[\$\]//)
+                    if _do_req($_->link->href )
+                    ->then_done(1)
+                    ->else_done(0)
+                    ->get;
+                 }
+                 return $_
+              })->grep(sub { $_->title !~ m/\[\$\]/ });
+           },
+        )->get;
+        [ 200, [ 'Content-type', 'application/atom+xml' ], [ $content->as_xml ] ]
+     },
+  },
+}
+
+__PACKAGE__->run_if_script;
