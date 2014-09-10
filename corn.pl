@@ -16,7 +16,7 @@ use XML::Feed;
 use Future;
 use LWP::UserAgent;
 
-sub feed ($url, $name, $commit = 0, $transform = sub { $_[0] }) {
+sub feed ($url, $transform = sub { $_[0] }, $name = '', $commit = 0) {
    _do_req($url)
    ->then(sub ($res) {
       my %seen;
@@ -51,23 +51,28 @@ sub _do_req ($url) {
    }
 }
 
+sub _risingtensions_content ($self) {
+   feed(
+      'http://risingtensions.tumblr.com/rss',
+      sub ($s) {
+         $s->grep(sub { index($_->content->body, 'http://www.tumblr.com/video/') == -1 });
+      },
+   )->get
+}
+
 sub _lwn_content ($self, $commit) {
    feed(
       'http://lwn.net/headlines/newrss',
-      'LWN',
-      $commit,
       sub ($s) {
          $s->map(sub {
-            if ($_->title =~ m/\[\$\]/) {
-               $_->title($_->title =~ s/\[\$\]//)
-               if _do_req($_->link->href )
-               ->then_done(1)
-               ->else_done(0)
-               ->get;
-            }
+            $_->title($_->title =~ s/\[\$\]//)
+               if $_->title =~ m/\[\$\]/ &&
+                  _do_req($_->link->href)->then_done(1)->else_done(0)->get;
             return $_
          })->grep(sub { $_->title !~ m/\[\$\]/ });
       },
+      'LWN',
+      $commit,
    )->get
 }
 
@@ -77,6 +82,12 @@ sub dispatch_request {
         [ 200,
            [ 'Content-type', 'application/atom+xml' ],
            [ $self->_lwn_content($commit)->as_xml ],
+        ]
+     },
+     '/risingtensions' => sub {
+        [ 200,
+           [ 'Content-type', 'application/atom+xml' ],
+           [ $self->_risingtensions_content->as_xml ],
         ]
      },
   },
