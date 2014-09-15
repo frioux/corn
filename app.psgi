@@ -76,6 +76,28 @@ sub _lwn_content ($self, $commit) {
    )->get
 }
 
+sub _cpantesters_content ($self) {
+   feed(
+      'http://www.cpantesters.org/author/F/FREW-nopass.rss',
+      sub ($s) {
+         $s->grep(sub {
+            $_->title !~ m(
+               DBIx-Class-Journal |
+               DBIx-Class-Helpers-2\.013002 |
+               Jemplate |
+               DBIx-Class-DigestColumns |
+               Web-Simple |
+               SQL-Translator |
+               SQL-Abstract-1\.73 |
+               DBIx-Class-0\.08207 |
+               Test-EOL |
+               DBIx-Class-MaterializedPath
+            )xi
+         });
+      },
+   )->get
+}
+
 sub dispatch_request {
    'GET + ?commit~' => sub ($self, $commit = 0, @) {
      '/lwn' => sub {
@@ -88,6 +110,12 @@ sub dispatch_request {
         [ 200,
            [ 'Content-type', 'application/atom+xml' ],
            [ $self->_risingtensions_content->as_xml ],
+        ]
+     },
+     '/cpantesters' => sub {
+        [ 200,
+           [ 'Content-type', 'application/atom+xml' ],
+           [ $self->_cpantesters_content->as_xml ],
         ]
      },
   },
