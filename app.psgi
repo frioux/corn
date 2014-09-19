@@ -51,7 +51,7 @@ sub _do_req ($url) {
    }
 }
 
-sub _risingtensions_content ($self) {
+sub _risingtensions ($self) {
    feed(
       'http://risingtensions.tumblr.com/rss',
       sub ($s) {
@@ -60,7 +60,7 @@ sub _risingtensions_content ($self) {
    )->get
 }
 
-sub _lwn_content ($self, $commit) {
+sub _lwn ($self, $commit) {
    feed(
       'http://lwn.net/headlines/newrss',
       sub ($s) {
@@ -76,7 +76,7 @@ sub _lwn_content ($self, $commit) {
    )->get
 }
 
-sub _cpantesters_content ($self) {
+sub _cpantesters ($self) {
    feed(
       'http://www.cpantesters.org/author/F/FREW-nopass.rss',
       sub ($s) {
@@ -98,26 +98,15 @@ sub _cpantesters_content ($self) {
    )->get
 }
 
+sub _200_rss ($self, $rss) {
+   [ 200, [ 'Content-type', 'application/atom+xml' ], [ $rss->as_xml ] ]
+}
+
 sub dispatch_request {
    'GET + ?commit~' => sub ($self, $commit = 0, @) {
-     '/lwn' => sub {
-        [ 200,
-           [ 'Content-type', 'application/atom+xml' ],
-           [ $self->_lwn_content($commit)->as_xml ],
-        ]
-     },
-     '/risingtensions' => sub {
-        [ 200,
-           [ 'Content-type', 'application/atom+xml' ],
-           [ $self->_risingtensions_content->as_xml ],
-        ]
-     },
-     '/cpantesters' => sub {
-        [ 200,
-           [ 'Content-type', 'application/atom+xml' ],
-           [ $self->_cpantesters_content->as_xml ],
-        ]
-     },
+     '/lwn'            => sub ($s, @) { $s->_200_rss($s->_lwn($commit))   },
+     '/risingtensions' => sub ($s, @) { $s->_200_rss($s->_risingtensions) },
+     '/cpantesters'    => sub ($s, @) { $s->_200_rss($s->_cpantesters)    },
   },
 }
 
