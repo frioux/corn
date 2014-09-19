@@ -55,7 +55,10 @@ sub _risingtensions ($self) {
    feed(
       'http://risingtensions.tumblr.com/rss',
       sub ($s) {
-         $s->grep(sub { index($_->content->body, 'http://www.tumblr.com/video/') == -1 });
+         $s->grep(sub {
+            index($_->content->body, 'http://www.tumblr.com/video/') == -1 &&
+            index($_->content->body, 'https://www.youtube.com/embed/') == -1
+         });
       },
    )->get
 }
