@@ -57,6 +57,7 @@ sub _risingtensions ($self) {
       'http://risingtensions.tumblr.com/rss',
       sub ($s) {
          $s->grep(sub {
+            $_->title !~ m/(?:Audio|Video)/i             &&
             _lacks($_,'http://www.tumblr.com/video/')    &&
             _lacks($_, 'https://w.soundcloud.com')       &&
             _lacks($_, 'tumblr_video_container')         &&
