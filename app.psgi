@@ -51,13 +51,16 @@ sub _do_req ($url) {
    }
 }
 
+sub _lacks ($item, $string) { index($item->content->body, $string) == -1 }
 sub _risingtensions ($self) {
    feed(
       'http://risingtensions.tumblr.com/rss',
       sub ($s) {
          $s->grep(sub {
-            index($_->content->body, 'http://www.tumblr.com/video/') == -1 &&
-            index($_->content->body, 'https://www.youtube.com/embed/') == -1
+            _lacks($_,'http://www.tumblr.com/video/')    &&
+            _lacks($_, 'https://w.soundcloud.com')       &&
+            _lacks($_, 'tumblr_video_container')         &&
+            _lacks($_, 'https://www.youtube.com/embed/')
          });
       },
    )->get
