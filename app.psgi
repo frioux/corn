@@ -21,7 +21,7 @@ sub feed ($url, $transform = sub { $_[0] }, $name = '', $commit = 0) {
    ->then(sub ($res) {
       my %seen;
 
-      my $path = "./$name.xml";
+      my $path = "$ENV{CORN_SILO}$name.xml";
 
       my $f = Feed::Pipe->new
          ->cat(\($res->decoded_content), ( -f $path ? ($path) : ()))
