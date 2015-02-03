@@ -4,21 +4,25 @@ package MyFilter;
 
 use Web::Simple;
 
-use 5.20.0;
+use 5.18.0;
 use warnings NONFATAL => 'all';
 
 use autodie;
-
-use experimental 'signatures';
 
 use Feed::Pipe;
 use XML::Feed;
 use Future;
 use LWP::UserAgent;
 
-sub feed ($url, $transform = sub { $_[0] }, $name = '', $commit = 0) {
+sub feed {
+   my ($url, $transform, $name, $commit) = @_;
+   $transform ||= sub { $_[0] };
+   $name ||= '';
+   $commit ||= 0;
+
    _do_req($url)
-   ->then(sub ($res) {
+   ->then(sub {
+      my $res = shift;
       my %seen;
 
       my $path = "$ENV{CORN_SILO}$name.xml";
@@ -39,7 +43,8 @@ sub feed ($url, $transform = sub { $_[0] }, $name = '', $commit = 0) {
    });
 }
 
-sub _do_req ($url) {
+sub _do_req {
+   my $url = shift;
    my $ua = LWP::UserAgent->new;
    $ua->timeout(10);
    my $response = $ua->get($url);
@@ -51,12 +56,12 @@ sub _do_req ($url) {
    }
 }
 
-sub _lacks ($item, $string) { index($item->content->body, $string) == -1 }
-sub _risingtensions ($self) {
+sub _lacks { index($_[0]->content->body, $_[1]) == -1 }
+sub _risingtensions {
    feed(
       'http://risingtensions.tumblr.com/rss',
-      sub ($s) {
-         $s->grep(sub {
+      sub {
+         shift->grep(sub {
             $_->title !~ m/(?:Audio|Video)/i             &&
             _lacks($_,'http://www.tumblr.com/video/')    &&
             _lacks($_, 'https://w.soundcloud.com')       &&
@@ -67,11 +72,12 @@ sub _risingtensions ($self) {
    )->get
 }
 
-sub _lwn ($self, $commit) {
+sub _lwn {
+   my ($self, $commit) = @_;
    feed(
       'http://lwn.net/headlines/newrss',
-      sub ($s) {
-         $s->map(sub {
+      sub {
+         shift->map(sub {
             $_->title($_->title =~ s/\[\$\]//r)
                if $_->title =~ m/\[\$\]/ &&
                   _do_req($_->link->href)->then_done(1)->else_done(0)->get;
@@ -83,11 +89,11 @@ sub _lwn ($self, $commit) {
    )->get
 }
 
-sub _cpantesters ($self) {
+sub _cpantesters {
    feed(
       'http://www.cpantesters.org/author/F/FREW-nopass.rss',
-      sub ($s) {
-         $s->grep(sub {
+      sub {
+         shift->grep(sub {
             $_->title !~ m(
                DBIx-Class-Journal |
                DBIx-Class-Helpers-2\.013002 |
@@ -105,15 +111,16 @@ sub _cpantesters ($self) {
    )->get
 }
 
-sub _200_rss ($self, $rss) {
-   [ 200, [ 'Content-type', 'application/atom+xml' ], [ $rss->as_xml ] ]
+sub _200_rss {
+   [ 200, [ 'Content-type', 'application/atom+xml' ], [ $_[1]->as_xml ] ]
 }
 
 sub dispatch_request {
-   'GET + ?commit~' => sub ($self, $commit = 0, @) {
-     '/lwn'            => sub ($s, @) { $s->_200_rss($s->_lwn($commit))   },
-     '/risingtensions' => sub ($s, @) { $s->_200_rss($s->_risingtensions) },
-     '/cpantesters'    => sub ($s, @) { $s->_200_rss($s->_cpantesters)    },
+   my $s = shift;
+   'GET + ?commit~' => sub {
+     '/lwn'            => sub { $s->_200_rss($s->_lwn($_[1]))     },
+     '/risingtensions' => sub { $s->_200_rss($s->_risingtensions) },
+     '/cpantesters'    => sub { $s->_200_rss($s->_cpantesters)    },
   },
 }
 
