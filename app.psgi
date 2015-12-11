@@ -82,7 +82,10 @@ sub _lwn {
                if $_->title =~ m/\[\$\]/ &&
                   _do_req($_->link->href)->then_done(1)->else_done(0)->get;
             return $_
-         })->grep(sub { $_->title !~ m/\[\$\]/ });
+         })->grep(sub {
+           $_->title !~ m/\[\$\]/ &&
+           $_->title !~ m/security (?:updates|advisories)/
+         });
       },
       'LWN',
       $commit,
