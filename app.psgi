@@ -84,7 +84,9 @@ sub _lwn {
             return $_
          })->grep(sub {
            $_->title !~ m/\[\$\]/ &&
-           $_->title !~ m/security (?:updates|advisories)/
+           $_->title !~ m/security (?:updates|advisories)/ &&
+           $_->title !~ m/stable kernel/i &&
+           $_->title !~ m/kernel prepatch/i
          });
       },
       'LWN',
