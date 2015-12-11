@@ -100,6 +100,7 @@ sub _cpantesters {
       sub {
          shift->grep(sub {
             $_->title !~ m(
+               Pod-Weaver-Plugin-Ditaa |
                DBIx-Class-Journal |
                DBIx-Class-Helpers-2\.013002 |
                Jemplate |
