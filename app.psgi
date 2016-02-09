@@ -14,6 +14,8 @@ use XML::Feed;
 use Future;
 use LWP::UserAgent;
 
+$ENV{CORN_SILO} ||= '';
+
 sub feed {
    my ($url, $transform, $name, $commit) = @_;
    $transform ||= sub { $_[0] };
