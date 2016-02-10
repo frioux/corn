@@ -129,6 +129,9 @@ sub dispatch_request {
      '/lwn'            => sub { $s->_200_rss($s->_lwn($_[1]))     },
      '/risingtensions' => sub { $s->_200_rss($s->_risingtensions) },
      '/cpantesters'    => sub { $s->_200_rss($s->_cpantesters)    },
+     '/ok' => sub {
+       [ 200, [ 'Content-Type', 'text/plain' ], [ "All is well\n\n" . `git rev-parse HEAD` ] ],
+     },
   },
 }
 
