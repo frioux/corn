@@ -74,6 +74,21 @@ sub _risingtensions {
    )->get
 }
 
+sub _badnrad {
+   feed(
+      'http://badnrad.tumblr.com/rss',
+      sub {
+         shift->grep(sub {
+            $_->title !~ m/(?:Audio|Video)/i             &&
+            _lacks($_,'http://www.tumblr.com/video/')    &&
+            _lacks($_, 'https://w.soundcloud.com')       &&
+            _lacks($_, 'tumblr_video_container')         &&
+            _lacks($_, 'https://www.youtube.com/embed/')
+         });
+      },
+   )->get
+}
+
 sub _lwn {
    my ($self, $commit) = @_;
    feed(
@@ -128,6 +143,7 @@ sub dispatch_request {
    'GET + ?commit~' => sub {
      '/lwn'            => sub { $s->_200_rss($s->_lwn($_[1]))     },
      '/risingtensions' => sub { $s->_200_rss($s->_risingtensions) },
+     '/badnrad'        => sub { $s->_200_rss($s->_badnrad)        },
      '/cpantesters'    => sub { $s->_200_rss($s->_cpantesters)    },
      '/ok' => sub {
        [ 200, [ 'Content-Type', 'text/plain' ], [ "All is well\n\n" . `git rev-parse HEAD` ] ],
