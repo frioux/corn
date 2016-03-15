@@ -94,12 +94,7 @@ sub _lwn {
    feed(
       'http://lwn.net/headlines/newrss',
       sub {
-         shift->map(sub {
-            $_->title($_->title =~ s/\[\$\]//r)
-               if $_->title =~ m/\[\$\]/ &&
-                  _do_req($_->link->href)->then_done(1)->else_done(0)->get;
-            return $_
-         })->grep(sub {
+         shift->grep(sub {
            $_->title !~ m/\[\$\]/ &&
            $_->title !~ m/security (?:updates|advisories)/i &&
            $_->title !~ m/stable kernel/i &&
