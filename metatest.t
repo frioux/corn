@@ -20,14 +20,14 @@ for my $feed (qw(lwn badnrad risingtensions cpantesters)) {
   die "$out" unless Process::Status->new->is_success;
 
   $out = capture_merged {
-    system qw(git checkout master);
+    system qw(git checkout perl);
     $pl_t0 = [gettimeofday];
     system "perl app.psgi /$feed > $feed-perl.xml";
     $pl_total = sprintf '%0.2f', tv_interval($pl_t0);
   };
   die "$out" unless Process::Status->new->is_success;
 
-  $out = `./minimeta.sh`;
+  $out = `./minimeta.sh $feed`;
   unlink 'LWN.xml';
   ok(!$out, 'Same diff!') or diag("diff: $out");
   note("Times:\n   pl: $pl_total\n   py: $py_total");
