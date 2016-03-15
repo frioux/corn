@@ -2,4 +2,5 @@
 
 source ~/.zshrc
 
-diff <(xml_grep /feed/entry/title python.xml | grep -v 'file filename') <(xml_grep /feed/entry/title perl.xml | grep -v 'file filename')
+name=$1
+diff <(xml_grep /feed/entry/title ${name}-python.xml | grep -v 'file filename') <(xml_grep /feed/entry/title ${name}-perl.xml | grep -v 'file filename')
