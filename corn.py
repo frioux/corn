@@ -1,6 +1,7 @@
 from feedpipe import FeedPipe
 import inspect
 import re
+import datetime
 
 def lambda_handler(event, context):
     operation = event['operation']
@@ -17,6 +18,13 @@ def lambda_handler(event, context):
 
 class Corn:
 
+    def _feed(self, url):
+        return FeedPipe() \
+            .cat([url]) \
+            .grep(lambda e: e.published.text >
+                  (datetime.datetime.now() -
+                   datetime.timedelta(30)).strftime('%FT%T%Z') )
+
     def _content_lacks(self, entry, lack):
         return all( x not in unicode(entry.content)
             for x in lack)
@@ -26,8 +34,7 @@ class Corn:
             for x in lack)
 
     def risingtensions(self, ignore):
-        return FeedPipe() \
-            .cat(['http://risingtensions.tumblr.com/rss']) \
+        return self._feed('http://risingtensions.tumblr.com/rss') \
             .grep(lambda e:
                 self._title_lacks(e, [ 'Audio', 'Video' ]) and
                 self._content_lacks(e, [
@@ -38,8 +45,7 @@ class Corn:
              ).as_xml()
 
     def badnrad(self, ignore):
-        return FeedPipe() \
-            .cat(['http://badnrad.tumblr.com/rss']) \
+        return self._feed('http://badnrad.tumblr.com/rss') \
             .grep(lambda e:
                 self._title_lacks(e, [ 'Audio', 'Video' ]) and
                 self._content_lacks(e, [
@@ -50,8 +56,7 @@ class Corn:
              ).as_xml()
 
     def lwn(self, write):
-        return FeedPipe() \
-            .cat(['http://lwn.net/headlines/newrss']) \
+        return self._feed('http://lwn.net/headlines/newrss') \
             .grep(lambda e:
                 '[$]' not in unicode(e.title) and
                 not re.search(
@@ -62,11 +67,7 @@ class Corn:
             ).as_xml()
 
     def cpantesters(self, ignore):
-        return FeedPipe() \
-            .cat(['http://www.cpantesters.org/author/F/FREW-nopass.rss']) \
-            .grep(lambda e: e.published.text >
-                  (datetime.datetime.now() -
-                   datetime.timedelta(30)).strftime('%F') ) \
+        return self._feed('http://www.cpantesters.org/author/F/FREW-nopass.rss') \
             .grep(lambda e:
                 self._title_lacks(e, [x for x in """
 Pod-Weaver-Plugin-Ditaa
