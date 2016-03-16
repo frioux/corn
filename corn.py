@@ -53,6 +53,7 @@ class Corn:
         return FeedPipe() \
             .cat(['http://lwn.net/headlines/newrss']) \
             .grep(lambda e:
+                '[$]' not in unicode(e.title) and
                 not re.search(
                     'security (?:updates|advisories)|stable kernel|kernel prepatch',
                     unicode(e.title),
