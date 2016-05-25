@@ -13,6 +13,7 @@ use Feed::Pipe;
 use XML::Feed;
 use Future;
 use LWP::UserAgent;
+use Try::Tiny;
 
 $ENV{CORN_SILO} ||= '';
 
@@ -146,8 +147,19 @@ sub dispatch_request {
      '/badnrad'        => sub { $s->_200_rss($s->_badnrad)        },
      '/cpantesters'    => sub { $s->_200_rss($s->_cpantesters)    },
      '/chris'          => sub {
-        my $res = _do_req('https://utcc.utoronto.ca/~cks/space/blog/?atom')
-          ->get;
+        my $err;
+        my $res = try {
+          _do_req('https://utcc.utoronto.ca/~cks/space/blog/?atom')
+            ->get
+        } catch {
+          $err = $_;
+        };
+
+        return [
+          500,
+          [ 'Content-Type' => 'text/plain' ],
+          [ $err->decoded_content ],
+        ] if $err;
 
         [
           $res->code,
