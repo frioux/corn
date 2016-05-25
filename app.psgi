@@ -145,6 +145,16 @@ sub dispatch_request {
      '/risingtensions' => sub { $s->_200_rss($s->_risingtensions) },
      '/badnrad'        => sub { $s->_200_rss($s->_badnrad)        },
      '/cpantesters'    => sub { $s->_200_rss($s->_cpantesters)    },
+     '/chris'          => sub {
+        my $res = _do_req('https://utcc.utoronto.ca/~cks/space/blog/?atom')
+          ->get;
+
+        [
+          $res->code,
+          [ 'Content-Type' => $res->header('content-type') ],
+          [ $res->content ],
+        ]
+     },
      '/ok' => sub {
        [ 200, [ 'Content-Type', 'text/plain' ], [ "All is well\n\n" . `git rev-parse HEAD` ] ],
      },
