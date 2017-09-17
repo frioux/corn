@@ -1,5 +1,5 @@
 FROM debian:8.0
-MAINTAINER Arthur Axel fREW Schmdit <frioux@gmail.com>
+MAINTAINER Arthur Axel fREW Schmidt <corn@afoolishmanifesto.com>
 
 ADD . /opt/app
 WORKDIR /opt/app
